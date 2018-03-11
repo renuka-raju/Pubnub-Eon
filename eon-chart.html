@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>STOCK TIME_SERIES_DAILY</title>
+</head>
+
+<body>
+<p style="font-size:150%;text-align:center;">STOCK TIME SERIES DAILY</p>
+
+
+<div>Enter equity symbol: <input type="text" id="symbol">
+<button type="submit" onclick="GenerateStream();">View</button>
+</div>
+<br>
+<br>
+<script src=https://cdn.pubnub.com/sdk/javascript/pubnub.4.0.11.min.js></script>
+<script type="text/javascript" src="https://pubnub.github.io/eon/v/eon/1.0.0/eon.js"></script>
+<link type="text/css" rel="stylesheet" href="https://pubnub.github.io/eon/v/eon/1.0.0/eon.css"/>
+<div id="splinechart1"></div>
+<script>
+	var pubnub = new PubNub({
+		publishKey:   'demo', // replace with your own pub-key
+		subscribeKey: 'demo' // replace with your own sub-key
+	});
+	eon.chart({
+            pubnub: pubnub,
+            channels: ["c3-spline1"], // the pubnub channel for real time data
+            generate: {           // c3 chart object
+                bindto: '#splinechart1',
+		axis: {
+        		x: {label: 'Date'},y: {label: 'Price'}    
+	    	}
+  	    },
+	    
+            xType: 'custom',
+            xId: 'x'
+	});
+</script>
+<div id="splinechart2">/div>
+<script>
+eon.chart({
+	pubnub: pubnub,
+	channels: ["c3-spline2"], 
+	generate: {           
+	bindto: '#splinechart2',
+	axis: {
+        	x: {label: 'Date'},y: {label: 'Price'}    
+	}
+	},
+	xType: 'custom',
+	xId: 'x'
+});
+</script>
+<div id="splinechart3">/div>
+<script>
+eon.chart({
+	pubnub: pubnub,
+	channels: ["c3-spline3"], 
+	generate: {           
+	bindto: '#splinechart3',
+	axis: {
+        	x: {label: 'Date'},y: {label: 'Volume'}    
+	}
+	},
+	xType: 'custom',
+	xId: 'x'
+});
+</script>
+<script>function GenerateStream(){
+    var xhttp = new XMLHttpRequest();
+    xhttp.timeout = 4000;
+    var openmap=new Object();
+    var closemap=new Object();
+    var lowmap=new Object();
+    var highmap=new Object();
+    var volumemap=new Object();
+    xhttp.onreadystatechange = function(e) {
+    if (xhttp.readyState === 4) {
+      if (xhttp.status === 200) {
+	console.log('Aah! Here it is');
+	var response = JSON.parse(xhttp.responseText);
+	var i=0,totaldays=0;
+	for (var key in response) {
+	  if(i>0){	
+		  if (response.hasOwnProperty(key)) {
+		    var objects = response[key];
+		    for (var innerkey in objects) {
+			totaldays+=1;
+			var val=objects[innerkey];
+			openmap[innerkey]=val["1. open"];
+			highmap[innerkey]=val["2. high"];
+			lowmap[innerkey]=val["3. low"];
+			closemap[innerkey]=val["4. close"];
+			volumemap[innerkey]=val["5. volume"];
+		    }
+		  }	
+	   }
+	  i+=1;
+	}
+       
+	var keys = Object.keys(openmap);
+	console.log(keys[0]);
+	var i=0;
+	var interval = setInterval(function(){
+	  eonkey=keys[i];
+	  if(i === totaldays){
+	        clearInterval(interval);
+    	  }
+	  i+=1;
+	  pubnub.publish({
+	    channel: "c3-spline1",
+	    message: {
+	      eon: {
+                "x" : eonkey,
+		"open" : openmap[eonkey],
+		"close" : closemap[eonkey]
+	      }
+	    }
+	  });
+	  pubnub.publish({
+	    channel: "c3-spline2",
+	    message: {
+	      eon: {
+                "x" : eonkey,
+		"high" : highmap[eonkey],
+		"low" : lowmap[eonkey]
+	      }
+	    }
+	  });
+	  pubnub.publish({
+	    channel: "c3-spline3",
+	    message: {
+	      eon: {
+                "x" : eonkey,
+		"volume" : volumemap[eonkey]
+	      }
+	    }
+	  });
+         }, 1000);
+      } else {
+	console.log('oh no!');
+      }
+    }
+  }
+  xhttp.ontimeout = function () {
+  console.log('timeout!');
+  }
+    ticker=document.getElementById('symbol').value;
+    xhttp.open("GET", "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="+ticker+"&interval=1min&apikey=<api_key_from_documentation>", true);
+    xhttp.setRequestHeader("Content-type", "application/json");
+    xhttp.send();
+}</script>
+</body>
+</html>
