@@ -1,8 +1,12 @@
 # Pubnub-Eon
-D3 powered spline chart that updates when it receives streaming data from a source.
+D3 powered pubnub eon spline chart that updates when it receives streaming data from a source.
+
+Include following dependencies
+<script src=https://cdn.pubnub.com/sdk/javascript/pubnub.4.0.11.min.js></script>
+<script type="text/javascript" src="https://pubnub.github.io/eon/v/eon/1.0.0/eon.js"></script>
+<link type="text/css" rel="stylesheet" href="https://pubnub.github.io/eon/v/eon/1.0.0/eon.css"/>
 
 Streaming data is fetched from a freely available API - Alpha Vantage API 
-
 Stock time series data -  returns the following daily time series data for equities in JSON format
 -Date
 -Daily open
